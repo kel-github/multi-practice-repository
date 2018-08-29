@@ -12,9 +12,7 @@
 %%%%% NOTE: walking through this code should be sufficient to understand how the
 %%%%% analysis was run - but if you want to repeat the analysis steps you
 %%%%% will need to...
-%%%%% a) change the following paths to match your local setup.
-% 1st link to spm 
-
+%%%%% change the following paths to match your local setup.
 PLACE = 'home';
 
 switch PLACE
@@ -253,13 +251,22 @@ saveas(gcf, [fig_fol '/connection_family_comparison/control_analyses/b_params_by
 save([dat_fol '/connection_family_comparison/control_analyses/grp_Params_by_grp.mat'], ...
      'trn_a', 'trn_a_mus', 'trn_a_prctiles', 'trn_b', 'trn_b_mus', 'trn_b_prctiles', ...
      'ctrl_a','ctrl_a_mus','ctrl_a_prctiles','ctrl_b','ctrl_b_mus','ctrl_b_prctiles');
-%%%%%%% compute the probability of the training group mean, given the
-%%%%%%% control group distribution
+%%%%%%% compute the probability of the observed differences, given a
+%%%%%%% permuted null distribution
 load([dat_fol '/connection_family_comparison/control_analyses/grp_Params_by_grp.mat']);
-% get 99% confidence intervals for the control group b LPut -> SMFC
-ctrl_lput_smfc_99 = prctile(ctrl_b(3, 2, :), [.5, 99.5], 3);
-% = -0.0956 - .3043
-% train b LPut -> SMFC = .2872
+n = 10000;
+out_dists = zeros(3, 3, n);
+
+for i = 1:length(rows)
+    out_dists(rows(i), cols(i), :) = permute_params_for_two_sample_test(squeeze(trn_b(rows(i), cols(i), :))', ...
+                                                                        squeeze(ctrl_b(rows(i), cols(i), :))', n);
+end
+%%%%%%% Plot permuted null distribution with observed difference using custom
+%%%%%%% function
+top_tit = {'Observed group difference against permuted null differences'};
+x_range = [-.2, .2];
+plot_grp_diffs_w_nulls(idx, rows, cols, out_dists, trn_b_mus, ctrl_b_mus, x_range, titles, top_tit);
+saveas(gcf, [fig_fol '/connection_family_comparison/control_analyses/S1_multi_observed_grp_diff_against_permuted_null.png']);
 
 %%%%%% final check - get total variance explained per group for the
 %%%%%% cortconn grp (to make sure differences in variability accounted for
@@ -267,9 +274,7 @@ ctrl_lput_smfc_99 = prctile(ctrl_b(3, 2, :), [.5, 99.5], 3);
 model_stems   = {'DCM_LPut_inp_mat%d.mat'};
 n_mods        = 63;
 tg_var        = get_total_variance(sub_nums(sub_nums<200), model_stems, n_mods, data_dir, sub_fol);
-% tg_var = .1360
 cg_var        = get_total_variance(sub_nums(sub_nums>199), model_stems, n_mods, data_dir, sub_fol);
-% cg_var = .1156
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

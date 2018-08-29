@@ -1,0 +1,126 @@
+---
+title: "multitask_prac_paramsBehav"
+author: "K. Garner"
+date: "29/08/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(psych)
+```
+
+### Summary
+Having identified the candidate network underpinning modulations in connectivity due to multitasking practice, we sought to identify whether parameter estimates for each subject correlate with the observed behaviour, and whether correlation differences are different between groups. We would expect the parameter estimates to correspond to practice-related reductions in multitasking costs, rather than to reductions of response time under single-task conditions (i.e. when there is no multitasking).
+
+First I present the correlations between parameter estimates and multitask reduction costs (for the summed multitasking cost reductions - see s1 individual differences analysis for definitions). The correlation between LIPL -> LPut is statistically significant after adjustment for multiple comparisons. The strength of the correlation is not statistically different between the training and the control groups.
+
+### What this code does:
+1. load the subject individual parameter estimates (Session 1 DCM - influence of multitasking)
+2. load the behaviour and extract variables of interest - join to the parameter estimate data
+3. Plot correlations between parameter estimates and behaviour and perform correlation tests between estimated parameters and observed data
+
+1. Load subject parameter estimates
+```{r get_b_data, include=FALSE, echo=FALSE}
+
+get.b.data <- function(fname){
+  
+  dat <- read.csv(fname, header = TRUE)
+  dat$sub = as.factor(dat$sub)
+  dat$grp = as.factor(dat$grp)
+  levels(dat$grp) = c("train", "control")
+  # assign parameter name
+  dat$con = rep(c("lipl_to_lput", "lput_to_lipl", "lput_to_smfc", "smfc_to_lipl", "smfc_to_lput"), times = length(levels(dat$sub)))
+  dat$con = as.factor(dat$con)
+  dat
+}
+fname = "~/Dropbox/QBI/mult-conn/multi-practice-repository/s1s2_mt_practice_dcm_analysis_outdata/behav_correlations/sub_b_params.csv"
+params = get.b.data(fname)
+```
+
+2. Load behavioural data and extract variables of interest, and join to parameter data
+```{r get_behav_data, include=FALSE, echo=FALSE}
+
+get.behav.data <- function(fname){
+  # this function assumes that the behavioural data is stored in the below folder
+  behav.dat        <- read.csv(fname)
+  behav.dat$sub    <- as.factor(behav.dat$sub)
+  behav.dat$Group  <- as.factor(behav.dat$Group)
+  levels(behav.dat$Group) <- c("train","control")
+  
+  behav.dat = behav.dat[,c(1:2, 29, 32, 27, 28, 33, 34)]
+  behav.dat
+}
+
+behav.dat = get.behav.data('../s1s2_behavioural_data/final_data_cleaned_250ms_to_3_sdevs_1331_recode.csv')
+
+data = inner_join(params, behav.dat, by=c("sub"))
+```
+
+3. Plot the data and compute pearson and spearman correlations
+```{r plot_corrs_functions, include=TRUE, echo=FALSE}
+#### basic plot function to plot rts by parameter
+draw.scatters <- function(data, dv){
+  # enter the dataframe and the behavioural DV of choice to yield scatter plot of b_param by    dv
+  scat = ggplot(data, aes_string(x="b", y=dv, col="con")) + 
+         geom_point() +
+         facet_wrap(~con) +
+         geom_smooth(method=lm) +
+         theme_bw() +
+         theme(axis.line = element_line(colour = "black"),
+         panel.grid.major = element_blank(),
+         panel.grid.minor = element_blank(),
+         panel.border = element_blank(),
+         panel.background = element_blank())
+          
+ scat
+}
+
+draw.scatters.grp <- function(data, dv){
+  # enter the dataframe and the behavioural DV of choice to yield scatter plot of b_param by    dv
+  scat = ggplot(data, aes_string(x="b", y=dv, col="grp")) + 
+         geom_point() +
+         facet_wrap(~con) +
+         theme_bw() +
+         theme(axis.line = element_line(colour = "black"),
+         panel.grid.major = element_blank(),
+         panel.grid.minor = element_blank(),
+         panel.border = element_blank(),
+         panel.background = element_blank())
+          
+ scat
+}
+
+
+get.cors <- function(data, iv, dv, method){
+  # pass in data frame, iv, dv, and method as tests to get outputs
+  x = data$b[data$con == iv]
+  y = data[data$con == iv, dv]
+  test = cor.test(x, y, method=method)
+  test
+}
+```
+
+
+# params vs. Sum DC Diff
+```{r Grp_Sum_DC_Diff, echo=TRUE}
+draw.scatters.grp(data, "Sum_Diff")
+lapply(unique(data$con), get.cors, data = data, dv = "Sum_Diff", method="spearman")
+```
+```{r Grp_fdr-Sum_DC_Diff, echo=TRUE}
+Grp_Sum_DC_Diff_ps = c(0.00785, 0.7909, 0.3688, 0.1733, 0.9716)
+p.adjust(Grp_Sum_DC_Diff_ps, method="fdr")
+```
+The correlation between LIPL -> LPut is statistically significant
+
+### Testing difference in correlation size between the groups
+```{r Train_Sum_DC_Diff, echo=TRUE}
+train.cor = get.cors(data[data$grp=="train", ], iv = "lipl_to_lput", dv = "Sum_Diff", method="spearman")
+ctrl.cor = get.cors(data[data$grp=="control", ], iv = "lipl_to_lput", dv = "Sum_Diff", method="spearman")
+cor.test.between = paired.r(-0.178045 , -0.1698871, n=45, n2=47, twotailed=TRUE)
+cor.test.between 
+```
+Test between correlation values does not show a difference between the two groups - there is a negative relationship between the strength of the LIPL -> LPut parameter and improvements to multitasking, invariant to group.
