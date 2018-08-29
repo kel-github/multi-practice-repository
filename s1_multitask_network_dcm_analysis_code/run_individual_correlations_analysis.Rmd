@@ -1,0 +1,154 @@
+---
+title: "multitask_s1_paramsBehav"
+author: "K. Garner"
+date: "28 August 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+```
+
+### Summary
+Having identified the candidate network underpinning modulations in connectivity due to multitasking demands, we sought to identify whether parameter estimates for each subject correlate with the observed behaviour. We would expect the parameter estimates to correspond to multitasking costs in behaviour, rather than to observations of response time under single-task conditions (i.e. when there is no multitasking).
+
+First I present the correlations between parameter estimates and single-task response times (separately for the visual-manual [VM] and auditory-manual [AM] tasks), then I present the correlations between parameter estimates and multi-task response times (seperately for VM and AM). Then I show the correlations between parameter estimates and the multitask cost estimated for each task separately (i.e. VM mixed - VM single | AM mixed - AM single). Lastly I show correlations between parameter estimates and the mean multitasking cost [mean(VM mixed - VM single, AM mixed - AM single)], and the summed multitasking cost [sum(VM mixed - VM single, AM mixed - AM single)]
+
+### What this code does:
+1. load the subject individual parameter estimates (Session 1 DCM - influence of multitasking)
+2. load the behaviour and extract variables of interest - join to the parameter estimate data
+3. Plot correlations between parameter estimates and behaviour and perform correlation tests between estimated parameters and observed data
+
+## Q. Do b parameters correlate with single-task RTs or with multitasking cost?
+
+1. Load subject parameter estimates
+```{r get_b_data, include=TRUE, echo=FALSE}
+
+get.b.data <- function(fname){
+  
+  dat <- read.csv(fname, header = TRUE)
+  dat$sub = as.factor(dat$sub)
+  dat$grp = as.factor(dat$grp)
+  levels(dat$grp) = c("train", "control")
+  # assign parameter name
+  dat$con = rep(c("lipl_to_lput", "lput_to_lipl", "lput_to_smfc", "smfc_to_lipl", "smfc_to_lput"), times = length(levels(dat$sub)))
+  dat$con = as.factor(dat$con)
+  dat
+}
+fname = "/home/kgarner/Dropbox/QBI/mult-conn/multi-practice-repository/s1_multitask_network_dcm_analysis_outdata/behav_correlations/sub_b_params.csv"
+params = get.b.data(fname)
+```
+2. Load behavioural data and extract variables of interest, and join to parameter data
+```{r get_behav_data, include=TRUE, echo=FALSE}
+
+get.behav.data <- function(fname){
+  # this function assumes that the behavioural data is stored in the below folder
+  behav.dat        <- read.csv(fname)
+  behav.dat$sub    <- as.factor(behav.dat$sub)
+  behav.dat$Group  <- as.factor(behav.dat$Group)
+  levels(behav.dat$Group) <- c("train","control")
+  behav.dat = behav.dat[,c(1:6, 21:22, 25, 30)]
+  behav.dat
+}
+
+behav.dat = get.behav.data('../s1s2_behavioural_data/final_data_cleaned_250ms_to_3_sdevs_1331_recode.csv')
+
+data = inner_join(params, behav.dat, by=c("sub"))
+```
+3. Plot the data and compute pearson and spearman correlations
+```{r plot_corrs_functions, include=TRUE, echo=FALSE}
+#### basic plot function to plot rts by parameter
+draw.scatters <- function(data, dv){
+  # enter the dataframe and the behavioural DV of choice to yield scatter plot of b_param by    dv
+  scat = ggplot(data, aes_string(x="b", y=dv, col="con")) + 
+         geom_point() +
+         facet_wrap(~con) +
+         geom_smooth(method=lm) +
+         theme_bw() +
+         theme(axis.line = element_line(colour = "black"),
+         panel.grid.major = element_blank(),
+         panel.grid.minor = element_blank(),
+         panel.border = element_blank(),
+         panel.background = element_blank()) +
+         scale_color_manual(values=wesanderson::wes_palette("Rushmore"))
+          
+ scat
+}
+
+get.cors <- function(data, iv, dv, method){
+  # pass in data frame, iv, dv, and method as tests to get outputs
+  x = data$b[data$con == iv]
+  y = data[data$con == iv, dv]
+  test = cor.test(x, y, method=method)
+  test
+}
+```
+### VM single-task
+```{r VM_single_task, echo=TRUE}
+
+draw.scatters(data, "Pre_VS")
+lapply(unique(data$con), get.cors, data = data, dv = "Pre_VS", method="spearman")
+```
+ - now perform correction for inflated type 1 error
+```{r fdr-Pre_VS, echo=TRUE}
+Pre_VS_ps = c(0.3129, 0.02082, 0.2273, 0.8235, 0.4002)
+p.adjust(Pre_VS_ps, method="fdr")
+```
+- as can be seen above, none survive correction 
+
+### AM single-task
+```{r AM_single_task, echo=TRUE}
+
+draw.scatters(data, "Pre_AS")
+lapply(unique(data$con), get.cors, data = data, dv = "Pre_AS", method="spearman")
+```
+
+### VM mixed
+```{r VM_mixed, echo=TRUE}
+
+draw.scatters(data, "Pre_VM")
+lapply(unique(data$con), get.cors, data = data, dv = "Pre_VM", method="spearman")
+```
+- no correlations achieve statistical significance
+
+### AM mixed
+```{r AM_mixed, echo=TRUE}
+
+draw.scatters(data, "Pre_AM")
+lapply(unique(data$con), get.cors, data = data, dv = "Pre_AM", method="spearman")
+```
+### VM multitasking cost (VM mixed - VM single)
+```{r VM_multi_cost, echo=TRUE}
+
+draw.scatters(data, "Pre_VM_DC")
+lapply(unique(data$con), get.cors, data = data, dv = "Pre_VM_DC", method="spearman")
+```
+ - now perform correction for inflated type 1 error
+```{r fdr_Pre_VM_DC, echo=TRUE}
+Pre_VS_ps = c(0.0909, 0.1628, 0.6785, 0.8459, 0.0164)
+p.adjust(Pre_VS_ps, method="fdr")
+```
+- doesn't quite survive correction
+
+### AM multitasking cost (AM mixed - AM single)
+```{r single_task_visual, echo=TRUE}
+
+draw.scatters(data, "Pre_AM_DC")
+lapply(unique(data$con), get.cors, data = data, dv = "Pre_AM_DC", method="spearman")
+```
+### Mean multitasking-cost
+```{r mean_multi, echo=TRUE}
+
+draw.scatters(data, "Pre_DC_Mean")
+lapply(unique(data$con), get.cors, data = data, dv = "Pre_DC_Mean", method="spearman")
+```
+
+### Summed multitasking-cost
+```{r sum_multi, echo=TRUE}
+
+draw.scatters(data, "Pre_Sum_DC")
+lapply(unique(data$con), get.cors, data = data, dv = "Pre_Sum_DC", method="spearman")
+```
