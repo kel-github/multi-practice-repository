@@ -10,14 +10,13 @@ This repository contains analysis code for preprocessing and running a DCM analy
 
 ### how to use this repository:
 To get a summary of the outcomes from the analyses, you can read the markdown summaries in each of these folders:
-
+s1_multitask_network_dcm_analysis_code
+s1s2_mt_practice_dcm_analysis_code
 
 If you want to follow the steps of the analyses, you can read the code and comments in the following files:
-
+s1_multitask_network_dcm_analysis_code/run_analysis.m
+s1s2_mt_practice_dcm_analysis_code/run_analysis.m
 
 
 If you want to rerrun the analyses, then download the code in this repository and the data at link: 
-Make sure the directories are structured accordingly:
-
-
-### guide to folders:
+Use the 'run_analysis.m' files above for guidelines on how to structure the analysis and data directories for easy code use
