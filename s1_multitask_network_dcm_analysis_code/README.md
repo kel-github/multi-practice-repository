@@ -54,7 +54,7 @@ To check that any subsequent observed differences regarding the modulatory influ
 ![Figure 8: Posterior distributions over the b parameters (modulatory connections, plotted by group)](../s1_multitask_network_dcm_analysis_figs/connection_family_comparison/control_analyses/b_params_by_sub_by_grp.png)
 
 
-In order to test whether these differences were statistically larger than is expected by chance, I compared the observed difference to a permuted null distribution (defined by pooling all observations, randomly selecting two groups and taking the mean difference over 10000 iterations). As can be seen from the figure below, all differences were larger than would be expected by chance.
+In order to test whether these differences were statistically larger than is expected by chance, I compared the observed difference to a permuted null distribution (defined by pooling all observations, randomly selecting two groups and taking the mean difference over 10000 iterations). As can be seen from the figure below, all differences were larger than would be expected by chance. (Grey = permuted null, red lilne = observed difference)
 
 #### Figure 9: Observed group differences relative to a permuted null
 ![Figure 9: Observed group differences relative to a permuted null)](../s1_multitask_network_dcm_analysis_figs/connection_family_comparison/control_analyses/S1_multi_observed_grp_diff_against_permuted_null.png)
