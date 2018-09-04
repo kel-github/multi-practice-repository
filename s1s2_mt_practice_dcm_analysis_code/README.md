@@ -21,6 +21,10 @@ We performed BMS and BMA over the model space (n=31) seperately for the training
 #### Figure 1: Estimated posterior distributions over the b-parameters plotted by group
 ![Fig 1: Estimated posterior distributions over the b-parameters plotted by group](../s1s2_mt_practice_dcm_analysis_figs/BMA_b_params_by_grp.png)  
 
+As can be seen, we can be confident that the LIPL -> LPut parameter does not contain zero for either group, the SMFC -> LIPL connection is also (just) retained for both groups, and the LPut -> SMFC connection is retained for the control group but not the training group.
+
+NOTE: Will redo this to add a fixed effects plot across both groups...
+
 ### Control analysis: Observed fixed-effect differences at the group level relative to a permuted null
 In order to test whether these differences were statistically larger than is expected by chance, I compared the observed difference to a permuted null distribution (defined by pooling all observations, randomly selecting two groups and taking the mean difference over 10000 iterations). As can be seen from the figure below, all differences were larger than would be expected by chance.
 

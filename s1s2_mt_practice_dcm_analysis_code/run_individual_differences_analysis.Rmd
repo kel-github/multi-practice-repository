@@ -2,7 +2,9 @@
 title: "multitask_prac_paramsBehav"
 author: "K. Garner"
 date: "29/08/2018"
-output: html_document
+output:
+  html_document: default
+  word_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -11,6 +13,8 @@ library(dplyr)
 library(tidyr)
 library(ggplot2)
 library(psych)
+library(nlme)
+library(car)
 ```
 
 ### Summary
@@ -124,3 +128,40 @@ cor.test.between = paired.r(-0.178045 , -0.1698871, n=45, n2=47, twotailed=TRUE)
 cor.test.between 
 ```
 Test between correlation values does not show a difference between the two groups - there is a negative relationship between the strength of the LIPL -> LPut parameter and improvements to multitasking, invariant to group.
+
+### Testing group differences on parameter values per se
+```{r Grp_Param_Diff_Test, include=TRUE, echo=TRUE}
+
+grps.mod = lme(b ~ con + grp + con*grp, random = ~1|sub, 
+               data   = data,
+               method = "REML")
+Anova(grps.mod, type="II")
+```
+
+There is a main effect of parameter and a main effect of group (using type II SS as no statistical interaction).
+
+Plotting b parameters by parameter and by group
+```{r plot_b_dists_by_grp_functions, include=FALSE, echo=FALSE}
+#### basic plot function to plot rts by parameter
+plot.grp.violins <- function(data){
+  # enter the dataframe and the behavioural DV of choice to yield scatter plot of b_param by    dv
+  v.plot = ggplot(data, aes_string(x="grp", y="b", fill="grp")) + 
+           geom_violin() +
+           geom_boxplot(width=0.2) +
+           facet_wrap(~con) +
+           theme_bw() +
+           theme(axis.line = element_line(colour = "black"),
+           panel.grid.major = element_blank(),
+           panel.grid.minor = element_blank(),
+           panel.border = element_blank(),
+           panel.background = element_blank())
+          
+ v.plot
+}
+```
+
+```{r plot_b_dists, include=TRUE, echo=TRUE}
+plot.grp.violins(data)
+
+```
+
