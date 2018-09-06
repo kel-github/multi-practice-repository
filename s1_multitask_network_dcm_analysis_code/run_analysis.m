@@ -13,7 +13,7 @@
 %%%%% analysis was run - but if you want to repeat the analysis steps you
 %%%%% will need to...
 %%%%% change the following paths to match your local setup.
-PLACE = 'home';
+PLACE = 'qubes';
 
 switch PLACE
     case 'home'
@@ -52,8 +52,9 @@ end
 
 %%%%% 5. Control analysis - BMA over winning family is conducted for the
 %%%%% practice and the control groups - to assess
-%%%%% pre-existing differences in the baseline session. p-value computed
-%%%%% for one connection that shows differences 
+%%%%% pre-existing differences in the baseline session.Groups are compared
+%%%%% using spm_Ncdf (see
+%%%%% https://www.jiscmail.ac.uk/cgi-bin/webadmin?A2=spm;73bcb3cd.1511)
 
 %%%%% 6. Parameters are extracted at the individual subject level and saved
 %%%%% to .csv for further analysis
@@ -220,9 +221,9 @@ get_model_space_filenames_v2(s2_sub_nums, fnames, ms, base, mfname);
 % batch4_ctrlgrp_ctrlAnalysis_job
 %%%% now extract and plot a and b parameters by group
 trn_bms_fname = [dat_fol '/connection_family_comparison/control_analyses/' 'trn_BMS/BMS.mat'];
-[trn_a, trn_a_mus, trn_a_prctiles, trn_b, trn_b_mus, trn_b_prctiles] = get_grpLevel_params_by_grp(trn_bms_fname);
+[trn_a, trn_a_mus, trn_a_prctiles, trn_b, trn_b_mus, trn_b_sds, trn_b_prctiles] = get_grpLevel_params_by_grp(trn_bms_fname);
 ctrl_bms_fname = [dat_fol '/connection_family_comparison/control_analyses/' 'ctrl_BMS/BMS.mat'];
-[ctrl_a, ctrl_a_mus, ctrl_a_prctiles, ctrl_b, ctrl_b_mus, ctrl_b_prctiles] = get_grpLevel_params_by_grp(ctrl_bms_fname);
+[ctrl_a, ctrl_a_mus, ctrl_a_prctiles, ctrl_b, ctrl_b_mus, ctrl_b_sds, ctrl_b_prctiles] = get_grpLevel_params_by_grp(ctrl_bms_fname);
 %%%% plot each group
 
 x_range = [-.4, .4];
@@ -249,24 +250,15 @@ saveas(gcf, [fig_fol '/connection_family_comparison/control_analyses/b_params_by
 % save group level parameter estimates so that differences can be compared
 % to differences found when modelling the influence of training (s1->s2)
 save([dat_fol '/connection_family_comparison/control_analyses/grp_Params_by_grp.mat'], ...
-     'trn_a', 'trn_a_mus', 'trn_a_prctiles', 'trn_b', 'trn_b_mus', 'trn_b_prctiles', ...
-     'ctrl_a','ctrl_a_mus','ctrl_a_prctiles','ctrl_b','ctrl_b_mus','ctrl_b_prctiles');
-%%%%%%% compute the probability of the observed differences, given a
-%%%%%%% permuted null distribution
+     'trn_a', 'trn_a_mus', 'trn_a_prctiles', 'trn_b', 'trn_b_mus', 'trn_b_sds', 'trn_b_prctiles', ...
+     'ctrl_a','ctrl_a_mus','ctrl_a_prctiles','ctrl_b','ctrl_b_mus', 'ctrl_b_sds', 'ctrl_b_prctiles');
+%%%%%%% compute the probability of the observed differences, 
 load([dat_fol '/connection_family_comparison/control_analyses/grp_Params_by_grp.mat']);
-n = 10000;
-out_dists = zeros(3, 3, n);
-
-for i = 1:length(rows)
-    out_dists(rows(i), cols(i), :) = permute_params_for_two_sample_test(squeeze(trn_b(rows(i), cols(i), :))', ...
-                                                                        squeeze(ctrl_b(rows(i), cols(i), :))', n);
-end
-%%%%%%% Plot permuted null distribution with observed difference using custom
-%%%%%%% function
-top_tit = {'Observed group difference against permuted null differences'};
-x_range = [-.2, .2];
-plot_grp_diffs_w_nulls(idx, rows, cols, out_dists, trn_b_mus, ctrl_b_mus, x_range, titles, top_tit);
-saveas(gcf, [fig_fol '/connection_family_comparison/control_analyses/S1_multi_observed_grp_diff_against_permuted_null.png']);
+%%%%%%% compute the probability of a group difference on each parameter
+n = [2, 1, 3, 1, 2];
+m = [1, 2, 2, 3, 3];
+pps = compare_grps_posts(n, m, trn_b_mus, trn_b_sds, ctrl_b_mus, ctrl_b_sds);
+%%% all probabilities are < .99 - so not significant
 
 %%%%%% final check - get total variance explained per group for the
 %%%%%% cortconn grp (to make sure differences in variability accounted for

@@ -43,6 +43,9 @@ get.b.data <- function(fname){
 }
 fname = "~/Dropbox/QBI/mult-conn/multi-practice-repository/s1s2_mt_practice_dcm_analysis_outdata/behav_correlations/sub_b_params.csv"
 params = get.b.data(fname)
+cons.of.int = c("lput_to_lipl", "smfc_to_lipl", "lput_to_smfc")
+params = params[params$con %in% cons.of.int, ]
+params$con = droplevels(params$con)
 ```
 
 2. Load behavioural data and extract variables of interest, and join to parameter data
@@ -62,6 +65,7 @@ get.behav.data <- function(fname){
 behav.dat = get.behav.data('../s1s2_behavioural_data/final_data_cleaned_250ms_to_3_sdevs_1331_recode.csv')
 
 data = inner_join(params, behav.dat, by=c("sub"))
+
 ```
 
 3. Plot the data and compute pearson and spearman correlations
@@ -114,19 +118,7 @@ get.cors <- function(data, iv, dv, method){
 draw.scatters.grp(data, "Sum_Diff")
 lapply(unique(data$con), get.cors, data = data, dv = "Sum_Diff", method="spearman")
 ```
-```{r Grp_fdr-Sum_DC_Diff, echo=TRUE}
-Grp_Sum_DC_Diff_ps = c(0.00785, 0.7909, 0.3688, 0.1733, 0.9716)
-p.adjust(Grp_Sum_DC_Diff_ps, method="fdr")
-```
-The correlation between LIPL -> LPut is statistically significant
 
-### Testing difference in correlation size between the groups
-```{r Train_Sum_DC_Diff, echo=TRUE}
-train.cor = get.cors(data[data$grp=="train", ], iv = "lipl_to_lput", dv = "Sum_Diff", method="spearman")
-ctrl.cor = get.cors(data[data$grp=="control", ], iv = "lipl_to_lput", dv = "Sum_Diff", method="spearman")
-cor.test.between = paired.r(-0.178045 , -0.1698871, n=45, n2=47, twotailed=TRUE)
-cor.test.between 
-```
 Test between correlation values does not show a difference between the two groups - there is a negative relationship between the strength of the LIPL -> LPut parameter and improvements to multitasking, invariant to group.
 
 ### Testing group differences on parameter values per se

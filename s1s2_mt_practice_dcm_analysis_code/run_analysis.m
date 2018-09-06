@@ -13,7 +13,7 @@
 %%%%% analysis was run - but if you want to repeat the analysis steps you
 %%%%% will need to...
 %%%%% change the following paths to match your local setup.
-PLACE = 'home';
+PLACE = 'qubes';
 
 switch PLACE
     case 'home'
@@ -39,9 +39,8 @@ end
 %%%%% compare against 0 and each other
 %%%%% 3. Plot posterior estimates over patameters for each group, for group
 %%%%% based comparisons
-%%%%% 4. Perform permutation tests on group level b parameters to determine
+%%%%% 4. Perform tests on group level b parameters to determine
 %%%%% whether the observed difference is statistically different from 0
-%%%%% 5. Plot the differences
 %%%%% 6. Extract b parameters for individual differences analysis
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -64,6 +63,13 @@ sub_nums(rm_idx) = [];
 % run_analysis.m for notes on missing data, remaining would not have had
 % sig voxels id'd by new first level glm
 
+%%%% get model space filenames for across all BMS
+fnames   = {'DCM_LPut_inp_winb_prac%d.mat'};
+ms       = 1:31;
+base     = data_dir;
+mfname   = [dat_fol '/allsubs/allsubs_allmodels_s1s2_s1winB'];
+get_model_space_filenames_v3(sub_nums, fnames, ms, base, mfname);
+
 %%%% now get model space filename for group 1 BMS
 g1_sub_nums = sub_nums(sub_nums < 200);
 tmp_subs    = g1_sub_nums;
@@ -82,6 +88,10 @@ get_model_space_filenames_v3(g2_sub_nums, fnames, ms, base, mfname);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 2. Perform BMA on each group - check for clear winners (if any)
 % run SPM with the following batch to get family comparisons and BMA
+% batch1a_allsubs_BMA_job.m % uncomment to run
+% output figs saved manually at
+% [fig_fol 'allsubs/allsubs_mPract_BOR.fig
+% [fig_fol 'allsubs/allsubs_mPract_ModExceedance.fig']
 % batch1_train_BMA_job.m % uncomment to run
 % output figs saved manually at 
 % [fig_fol 'train/train_mPrac_BOR.fig']
@@ -96,12 +106,14 @@ get_model_space_filenames_v3(g2_sub_nums, fnames, ms, base, mfname);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% 3. Plot posteriors for each group for comparisons between and against 0
+% 3. Plot posteriors for all subs, and then for each group, each group for comparisons between and against 0
 % first extract parameters
+all_bms_fname = [dat_fol '/allsubs/' 'BMS.mat'];
+[all_a, all_a_mus, all_a_prctiles, all_b, all_b_mus, all_b_sds, all_b_prctiles] = get_grpLevel_params_by_grp_v2(all_bms_fname,3);
 trn_bms_fname = [dat_fol '/train/' 'BMS.mat'];
-[trn_a, trn_a_mus, trn_a_prctiles, trn_b, trn_b_mus, trn_b_prctiles] = get_grpLevel_params_by_grp_v2(trn_bms_fname,3);
+[trn_a, trn_a_mus, trn_a_prctiles, trn_b, trn_b_mus, trn_b_sds, trn_b_prctiles] = get_grpLevel_params_by_grp_v2(trn_bms_fname,3);
 ctrl_bms_fname = [dat_fol '/control/' 'BMS.mat'];
-[ctrl_a, ctrl_a_mus, ctrl_a_prctiles, ctrl_b, ctrl_b_mus, ctrl_b_prctiles] = get_grpLevel_params_by_grp_v2(ctrl_bms_fname,3);
+[ctrl_a, ctrl_a_mus, ctrl_a_prctiles, ctrl_b, ctrl_b_mus, ctrl_b_sds, ctrl_b_prctiles] = get_grpLevel_params_by_grp_v2(ctrl_bms_fname,3);
 % now plot b's
 titles = {'LIPL to LPut', 'LPut to LIPL', 'LPut to SMFC', ...
           'SMFC to LIPL', 'SMFC to LPut'};
@@ -110,30 +122,20 @@ rows =[2, 1, 3, 1, 2];
 cols =[1, 2, 2, 3, 3];
 top_tit = {'S1 B parameters (sub level) - by groups'};
 x_range = [-.8, .8];
+plot_grp_level_params(all_b, idx, rows, cols, all_b_mus, all_b_prctiles, x_range, titles, top_tit)
+saveas(gcf, [fig_fol '/BMA_b_params_over_both_grps.png']);
 plot_grp_level_by_grp(idx, rows, cols, trn_b, trn_b_mus, trn_b_prctiles, ctrl_b, ctrl_b_mus, ctrl_b_prctiles, x_range, titles, top_tit)
 saveas(gcf, [fig_fol '/BMA_b_params_by_grp.png']);
+%%%%%% 3 connections are statistically different to 0 - LPut -> LIPL, SMFC
+%%%%%% -> LIPL, LPut -> SMFC
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% 4. Perform permutations of differences between shuffled data to form a
-% null distribution on the difference between groups for each parameter
-% using custom function written for purpose
-n = 10000;
-out_dists = zeros(3, 3, n);
-
-for i = 1:length(rows)
-    out_dists(rows(i), cols(i), :) = permute_params_for_two_sample_test(squeeze(trn_b(rows(i), cols(i), :))', ...
-                                                                        squeeze(ctrl_b(rows(i), cols(i), :))', n);
-end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% 5. Plot permuted null distribution with observed difference using custom
-% function
-top_tit = {'Observed group difference against permuted null difference'};
-x_range = [-.5, .1];
-plot_grp_diffs_w_nulls(idx, rows, cols, out_dists, trn_b_mus, ctrl_b_mus, x_range, titles, top_tit);
-saveas(gcf, [fig_fol '/Observed_grp_diff_against_permuted_null.png']);
+% 4. Test for group differences
+n = [1, 3, 1];
+m = [2, 2, 3];
+pps = compare_grps_posts(n, m, trn_b_mus, trn_b_sds, ctrl_b_mus, ctrl_b_sds);
+%%%% second connection is 1 (> 1 - (.05/3)) = .98
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

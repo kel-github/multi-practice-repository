@@ -16,21 +16,20 @@ combinations of modulation to the 5 connections (resulting in 31 possible models
 The network was assumed to be driven by inputs to the Putamen.
 
 ### Model inference plan
-We performed BMS and BMA over the model space (n=31) seperately for the training and the control groups. As no single model emerged as strongly preferred in either group (albeit some group differences in preferred model), we conducted BMA over the parameters to estimate the fixed effect of practice for each group. The estimated posteriors over parameters are plotted by group below:
- 
-#### Figure 1: Estimated posterior distributions over the b-parameters plotted by group
-![Fig 1: Estimated posterior distributions over the b-parameters plotted by group](../s1s2_mt_practice_dcm_analysis_figs/BMA_b_params_by_grp.png)  
+We performed BMS and BMA over the model space (n=31) seperately for the training and the control groups. As no single model emerged as strongly preferred in either group (albeit some group differences in preferred model), we first conducted BMA across all subjects, to determine which connections were reliably different from 0 (i.e. which connections we include in the final model). We then conduct BMA over each group to identify group differences on parameters (by calculating the posterior probability that the group difference == 0). The estimated posteriors over parameters are plotted below:
 
-As can be seen, we can be confident that the LIPL -> LPut parameter does not contain zero for either group, the SMFC -> LIPL connection is also (just) retained for both groups, and the LPut -> SMFC connection is retained for the control group but not the training group.
+#### Figure 1: Estimated posterior distributions over the b-parameters over all subjects
+![Fig 1: Estimated posterior distributions over the b-parameters over all subjects](../s1s2_mt_practice_dcm_analysis_figs/BMA_b_params_over_both_grps.png)  
+We include the connections LPut -> LIPL, SMFC -> LIPL, LPut -> SMFC
 
-NOTE: Will redo this to add a fixed effects plot across both groups...
+#### Figure 2: Final model for the modulatory influence of practice on the network
+![Fig 2: Final model for the modulatory influence of practice](../s1s2_mt_practice_dcm_analysis_figs/practice_winModel.png)  
 
-### Control analysis: Observed fixed-effect differences at the group level relative to a permuted null
-In order to test whether these differences were statistically larger than is expected by chance, I compared the observed difference to a permuted null distribution (defined by pooling all observations, randomly selecting two groups and taking the mean difference over 10000 iterations). As can be seen from the figure below, all differences were larger than would be expected by chance.
+Now we see if there are any group differences in the strength of the parameters
+#### Figure 3: Estimated posterior distributions over the b-parameters plotted by group
+![Fig 3: Estimated posterior distributions over the b-parameters plotted by group](../s1s2_mt_practice_dcm_analysis_figs/BMA_b_params_by_grp.png)  
 
-#### Figure 9: Observed group differences relative to a permuted null
-![Figure 9: Observed group differences relative to a permuted null)](../s1s2_mt_practice_dcm_analysis_figs/Observed_grp_diff_against_permuted_null.png)
-
+Calculation of posterior probabilities show that the LPut -> SMFC connection is statistically different between the two groups (pp = 1), but not for the other two connections (pps < .94)
 
 ### Q4: Do individual subject parameter estimates correlate with behaviour/multitasking costs?
 See html file above for output of this analysis.

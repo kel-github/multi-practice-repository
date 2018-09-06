@@ -34,17 +34,13 @@ As can be seen, the network recieves driving inputs via the putamen.
 
 Now that we now that multitasking modulates both cortiocortical and striatal-cortical connectivity, we perform Bayesian Model Averaging (BMA) to determine how confident we can be in the presence of each modulatory connection. To achieve this, we computed 95% confidence intervals for posterior distribution over each parameter (group-level estimate). Any connection that contained 0 within the 95% CIs was rejected. The remaining parameters are assumed to reflect reliable modulations of multitasking to that connection.
 
-#### Figure 5: Estimated group-level posterior distributions over the a-parameters
-![Figure 5: Posterior distributions over the a parameters (endogenous connections)](../s1_multitask_network_dcm_analysis_figs/connection_family_comparison/BMA_a_params.png) 
-Solid lines reflect the mean, whereas dashed lines reflect the 95% confidence intervals over the distribution. 
-
-#### Figure 6: Estimated group-level posterior distributions over the b-parameters
-![Figure 6: Posterior distributions over the b parameters (modulatory connections)](../s1_multitask_network_dcm_analysis_figs/connection_family_comparison/BMA_b_params.png)
+#### Figure 5: Estimated group-level posterior distributions over the b-parameters
+![Figure 5: Posterior distributions over the b parameters (modulatory connections)](../s1_multitask_network_dcm_analysis_figs/connection_family_comparison/BMA_b_params.png)
 
 As can be seen, we reject the presence of the LIPL -> SMFC connection. All others remain - giving the final following model for the modulatory influence of multitasking...
 
 #### Figure 7: Connectivity model underpinning the modulatory influence of multitasking
-![Figure 7: Connectivity model underpinning the modulatory influence of multitasking](../s1_multitask_network_dcm_analysis_figs/multitask_winModel.png)
+![Figure 6: Connectivity model underpinning the modulatory influence of multitasking](../s1_multitask_network_dcm_analysis_figs/multitask_winModel.png)
 
 ### Control analysis: group baseline differences in the modulatory influence of multitasking?
 To check that any subsequent observed differences regarding the modulatory influence of training (i.e. training vs. control group comparison from pre- to post-training) are not due to spurious baseline differences, we repeated the BMA analysis above for each group. The estimated posteriors over the b parameters are plotted by group below. As can be seen, differences can be observed between the groups on all the parameters.
@@ -54,11 +50,7 @@ To check that any subsequent observed differences regarding the modulatory influ
 ![Figure 8: Posterior distributions over the b parameters (modulatory connections, plotted by group)](../s1_multitask_network_dcm_analysis_figs/connection_family_comparison/control_analyses/b_params_by_sub_by_grp.png)
 
 
-In order to test whether these differences were statistically larger than is expected by chance, I compared the observed difference to a permuted null distribution (defined by pooling all observations, randomly selecting two groups and taking the mean difference over 10000 iterations). As can be seen from the figure below, all differences were larger than would be expected by chance. (Grey = permuted null, red lilne = observed difference)
-
-#### Figure 9: Observed group differences relative to a permuted null
-![Figure 9: Observed group differences relative to a permuted null)](../s1_multitask_network_dcm_analysis_figs/connection_family_comparison/control_analyses/S1_multi_observed_grp_diff_against_permuted_null.png)
-
+In order to test whether these differences were statistically larger than is expected by chance, I computed the posterior probability (pp) that the difference between groups was > 0. All pps were less than the 99% cutoff (alpha rate adjusted for multiple comparisons) (all pps < .96).
 
 ### Q4: Do individual subject parameter estimates correlate with behaviour/multitasking costs?
 See html file above for output of this analysis.

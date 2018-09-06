@@ -2,7 +2,10 @@
 title: "multitask_s1_paramsBehav"
 author: "K. Garner"
 date: "28 August 2018"
-output: html_document
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -38,7 +41,7 @@ get.b.data <- function(fname){
   dat$con = as.factor(dat$con)
   dat
 }
-fname = "/home/kgarner/Dropbox/QBI/mult-conn/multi-practice-repository/s1_multitask_network_dcm_analysis_outdata/behav_correlations/sub_b_params.csv"
+fname = "~/Dropbox/QBI/mult-conn/multi-practice-repository/s1_multitask_network_dcm_analysis_outdata/behav_correlations/sub_b_params.csv"
 params = get.b.data(fname)
 ```
 2. Load behavioural data and extract variables of interest, and join to parameter data
