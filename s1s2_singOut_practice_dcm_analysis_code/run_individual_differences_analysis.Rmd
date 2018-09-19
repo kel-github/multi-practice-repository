@@ -1,0 +1,160 @@
+---
+title: "multitask_prac_paramsBehav"
+author: "K. Garner"
+date: "29/08/2018"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(psych)
+library(nlme)
+library(car)
+```
+
+### Summary
+Having identified the candidate network underpinning modulations in connectivity due to multitasking practice, we sought to identify whether parameter estimates for each subject correlate with the observed behaviour, and whether correlation differences are different between groups. We would expect the parameter estimates to correspond to practice-related reductions in multitasking costs, rather than to reductions of response time under single-task conditions (i.e. when there is no multitasking).
+
+First I present the correlations between parameter estimates and multitask reduction costs (for the summed multitasking cost reductions - see s1 individual differences analysis for definitions). No statistically significant correlations are observed.
+
+### What this code does:
+1. load the subject individual parameter estimates (Session 1 DCM - influence of multitasking)
+2. load the behaviour and extract variables of interest - join to the parameter estimate data
+3. Plot correlations between parameter estimates and behaviour and perform correlation tests between estimated parameters and observed data
+
+
+```{r get_b_data, include=FALSE, echo=FALSE}
+
+get.b.data <- function(fname){
+  
+  dat <- read.csv(fname, header = TRUE)
+  dat$sub = as.factor(dat$sub)
+  dat$grp = as.factor(dat$grp)
+  levels(dat$grp) = c("train", "control")
+  # assign parameter name
+  dat$con = rep(c("lipl_to_lput", "lput_to_lipl", "lput_to_smfc", "smfc_to_lipl", "smfc_to_lput"), times = length(levels(dat$sub)))
+  dat$con = as.factor(dat$con)
+  dat
+}
+fname = "~/Dropbox/QBI/mult-conn/multi-practice-repository/s1s2_singOut_practice_dcm_analysis_outdata/behav_correlations/sub_b_params.csv"
+params = get.b.data(fname)
+cons.of.int = c("smfc_to_lput", "lput_to_smfc")
+params = params[params$con %in% cons.of.int, ]
+params$con = droplevels(params$con)
+```
+
+
+```{r get_behav_data, include=FALSE, echo=FALSE}
+
+get.behav.data <- function(fname){
+  # this function assumes that the behavioural data is stored in the below folder
+  behav.dat        <- read.csv(fname)
+  behav.dat$sub    <- as.factor(behav.dat$sub)
+  behav.dat$Group  <- as.factor(behav.dat$Group)
+  levels(behav.dat$Group) <- c("train","control")
+  
+  behav.dat = behav.dat[,c(1:2, 29, 32, 27, 28, 33, 34)]
+  behav.dat
+}
+
+behav.dat = get.behav.data('../s1s2_behavioural_data/final_data_cleaned_250ms_to_3_sdevs_1331_recode.csv')
+
+data = inner_join(params, behav.dat, by=c("sub"))
+
+```
+
+
+```{r plot_corrs_functions, include=TRUE, echo=FALSE}
+#### basic plot function to plot rts by parameter
+draw.scatters <- function(data, dv){
+  # enter the dataframe and the behavioural DV of choice to yield scatter plot of b_param by    dv
+  scat = ggplot(data, aes_string(x="b", y=dv, col="con")) + 
+         geom_point() +
+         facet_wrap(~con) +
+         geom_smooth(method=lm) +
+         theme_bw() +
+         theme(axis.line = element_line(colour = "black"),
+         panel.grid.major = element_blank(),
+         panel.grid.minor = element_blank(),
+         panel.border = element_blank(),
+         panel.background = element_blank())
+          
+ scat
+}
+
+draw.scatters.grp <- function(data, dv){
+  # enter the dataframe and the behavioural DV of choice to yield scatter plot of b_param by    dv
+  scat = ggplot(data, aes_string(x="b", y=dv, col="grp")) + 
+         geom_point() +
+         facet_wrap(~con) +
+         theme_bw() +
+         theme(axis.line = element_line(colour = "black"),
+         panel.grid.major = element_blank(),
+         panel.grid.minor = element_blank(),
+         panel.border = element_blank(),
+         panel.background = element_blank())
+          
+ scat
+}
+
+
+get.cors <- function(data, iv, dv, method){
+  # pass in data frame, iv, dv, and method as tests to get outputs
+  x = data$b[data$con == iv]
+  y = data[data$con == iv, dv]
+  test = cor.test(x, y, method=method)
+  test
+}
+```
+
+
+# params vs. Sum DC Diff
+```{r Grp_Sum_DC_Diff, echo=TRUE}
+draw.scatters.grp(data, "Sum_Diff")
+lapply(unique(data$con), get.cors, data = data, dv = "Sum_Diff", method="spearman")
+```
+
+No statistically significant correlations are observed.
+
+### Testing group differences on parameter values per se
+```{r Grp_Param_Diff_Test, include=TRUE, echo=TRUE}
+
+grps.mod = lme(b ~ con + grp + con*grp, random = ~1|sub, 
+               data   = data,
+               method = "REML")
+Anova(grps.mod, type="II")
+```
+
+There is a main effect of parameter (using type II SS as no statistical interaction).
+
+Plotting b parameters by parameter and by group
+```{r plot_b_dists_by_grp_functions, include=FALSE, echo=FALSE}
+#### basic plot function to plot rts by parameter
+plot.grp.violins <- function(data){
+  # enter the dataframe and the behavioural DV of choice to yield scatter plot of b_param by    dv
+  v.plot = ggplot(data, aes_string(x="grp", y="b", fill="grp")) + 
+           geom_violin() +
+           geom_boxplot(width=0.2) +
+           facet_wrap(~con) +
+           theme_bw() +
+           theme(axis.line = element_line(colour = "black"),
+           panel.grid.major = element_blank(),
+           panel.grid.minor = element_blank(),
+           panel.border = element_blank(),
+           panel.background = element_blank())
+          
+ v.plot
+}
+```
+
+```{r plot_b_dists, include=TRUE, echo=TRUE}
+plot.grp.violins(data)
+
+```
+
