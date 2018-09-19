@@ -133,12 +133,21 @@ saveas(gcf, [fig_fol '/BMA_b_params_by_grp.png']);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% 4. Test for group differences on included connection
-n = [3, 2];
-m = [2, 3];
+% 4. Test for group differences on included connections
+n = [2, 1, 3, 1, 2]; 
+m = [1, 2, 2, 3, 3]; 
+train_pps = compare_grp_vs_zero(n, m, trn_b_mus, trn_b_sds);
+% for the training group, the LPut -> LIPL, and the SMFC -> Lput
+% connections survive correction for multiple comparisons (.05/5)
+% 0.9212    0.9869    0.6306    0.6465    0.9958
+control_pps = compare_grp_vs_zero(n, m, ctrl_b_mus, ctrl_b_sds);
+% for the control group, only the LPut -> SMFC model survives correction
+%  0.5565    0.6479    1.0000    0.9752    0.8659
+n = [1, 3, 2];
+m = [2, 2, 3];
 pps = compare_grps_posts(n, m, trn_b_mus, trn_b_sds, ctrl_b_mus, ctrl_b_sds);
-%%%% Lput -> SMFC sig diff between the two groups (.9995) and SMFC -> LPut
-%%%% is not (.8842)
+%%%% Lput -> SMFC sig diff between the two groups (.9995), LPut to LIPL, 
+%%%% and SMFC -> LPut do not survive correction (.9701, .8842)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

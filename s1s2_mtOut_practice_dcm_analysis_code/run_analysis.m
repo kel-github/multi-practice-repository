@@ -126,13 +126,26 @@ top_tit = {'S1 B parameters (sub level) - by groups'};
 x_range = [-.8, .8];
 plot_grp_level_params(all_b, idx, rows, cols, all_b_mus, all_b_prctiles, x_range, titles, top_tit)
 saveas(gcf, [fig_fol '/BMA_b_params_over_both_grps.png']);
+%%%%%% across all, 1 connection is statistically different to 0 - LPut -> SMFC
+
 plot_grp_level_by_grp(idx, rows, cols, trn_b, trn_b_mus, trn_b_prctiles, ctrl_b, ctrl_b_mus, ctrl_b_prctiles, x_range, titles, top_tit)
 saveas(gcf, [fig_fol '/BMA_b_params_by_grp.png']);
-%%%%%% 1 connection is statistically different to 0 - LPut -> SMFC
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% 4. Test for group differences on included connection
+% 4. Test for group differences against 0 and against each other on
+% included connections
+%%%%%%% against zero
+%%%%%%% train grp
+n = [2, 1, 3, 1, 2]; 
+m = [1, 2, 2, 3, 3];
+train_pps = compare_grp_vs_zero(n, m, trn_b_mus, trn_b_sds);
+%%%% for the train group, the LPut -> SMFC connection survives correction
+% 0.7418    0.9854    0.9998    0.7040    0.6426
+ctrl_pps = compare_grp_vs_zero(n, m, ctrl_b_mus, ctrl_b_sds);
+%%%%% same for ctrl group
+% 0.8746    0.6513    0.9995    0.7650    0.9387
+
 n = 3;
 m = 2;
 pps = compare_grps_posts(n, m, trn_b_mus, trn_b_sds, ctrl_b_mus, ctrl_b_sds);
