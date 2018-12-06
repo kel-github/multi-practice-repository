@@ -13,19 +13,19 @@
 %%%%% analysis was run - but if you want to repeat the analysis steps you
 %%%%% will need to...
 %%%%% change the following paths to match your local setup.
-PLACE = 'qubes';
+PLACE = 'home';
 
 switch PLACE
     case 'home'
         
         addpath('~/Documents/MATLAB/spm12');
-        data_dir = '/Volumes/HouseShare/multi-dcm-out/dcm_analysis_vAnat'; % location of subject folders of dcm data
+        data_dir = '~/Documents/s1_multi_dcm_out_dat'; % location of subject folders of dcm data
         dat_fol  = '~/Dropbox/QBI/mult-conn/multi-practice-repository/s1_multitask_network_dcm_analysis_outdata'; % location of outputs for this analysis
         fig_fol  = '~/Dropbox/QBI/mult-conn/multi-practice-repository/s1_multitask_network_dcm_analysis_figs';
     case 'qubes'
         
         addpath('/home/kgarner/Documents/MATLAB/spm12');
-        data_dir = '/media/kgarner/HouseShare/multi-dcm-out/dcm_analysis_vAnat'; % location of subject folders of dcm data
+        % data_dir = '/media/kgarner/HouseShare/multi-dcm-out/dcm_analysis_vAnat'; % location of subject folders of dcm data
         dat_fol  = '/home/kgarner/Dropbox/QBI/mult-conn/multi-practice-repository/s1_multitask_network_dcm_analysis_outdata'; % location of outputs for this analysis
         fig_fol  =  '/home/kgarner/Dropbox/QBI/mult-conn/multi-practice-repository/s1_multitask_network_dcm_analysis_figs';
 end
@@ -61,34 +61,48 @@ end
 
 % subject exclusion notes
 % 102, - voxels did not survive correction 
-% 124, - voxels did not survive correction
-% 128, - missing data
+% 128, - missing data (runs from s1 block 6)
 % 138, - missing data
 % 203, - voxels did not survive correction
-% 223, - missing data
-% 233, - voxels did not survive correction
-% 250  - voxels did not survive correction
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % START CODE
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% 1. perform some basic checks on the dcm models
+% 1. id who has an output file and define model spaces for subs and groups
+% first, cget subs who have a DCM output file
+sub_nums = [101:150, 201:250];
+rm_idx = [];
+for i = 1:length(sub_nums)  
+    tmp_fname = sprintf([data_dir '/sub_%d_out_anatROI_initGLM_DCMOut/DCM_OUT/DCM_LPut_inp_mat10.mat'], sub_nums(i));
+    if exist(tmp_fname)
+    else
+        rm_idx = [rm_idx i];
+    end   
+end
+rm_subs = sub_nums(rm_idx);
+sub_nums(rm_idx) = [];
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% perform some basic checks on the dcm models
 % this code can be run to perform some basic checks on the models across
 % subs
 % i.e. how much of the variance is accounted for, are parameters reliably 
 % different from 0? etc
 % code calls spm function to generate an interactive plot -
-sub_nums     = [101, 103:123, 125:127, 129:137, 139:150, 201:202, 204:222, 224:232, 234:249];
 model_stem   = {'DCM_LPut_inp_mat%d.mat'};
-sub_fol      = 'sub_%d_out_anatROI_initGLM';
+sub_fol      = 'sub_%d_out_anatROI_initGLM_DCMOut';
 model_nums = 45:63;
-run_dcm_checks(sub_nums, sub_fol, data_dir, model_nums, model_stem)
-
+run_dcm_checks(sub_nums, sub_fol, data_dir, model_nums, model_stem);
+%sess_peaks = get_participant_peaks(sub_nums, data_dir, sub_fol); %%%%%
+%NEED TO RE-DO THIS 
+%save([dat_fol '/s1_multi_network_sub_peaks'], 'sess_peaks');
 % get total variance explained using custom function
 model_stems   = {'DCM_LPut_inp_mat%d.mat', 'DCM_LIPL_inp_mat%d.mat'};
-sub_fol      = 'sub_%d_out_anatROI_initGLM/DCM_OUT';
+sub_fol      = 'sub_%d_out_anatROI_initGLM_DCMOut/DCM_OUT';
 n_mods       = 63; 
 var = get_total_variance(sub_nums, model_stems, n_mods, data_dir, sub_fol);
-% R^2 with these settings = .1313
+% R^2 with these settings = .1083
+% extract participant peaks using custom function and save in the out data
+
+
 %%%% overall checks show that some subjects are fairly well accounted for (~20% variance),
 %%%% while some subjects are not
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -166,12 +180,14 @@ save([dat_fol '/connection_family_comparison/' 'fam_idxs_q2_cortconn_v1'], 'fami
 load([dat_fol '/connection_family_comparison/BMS.mat'])
 % get a parameters
 A_mus       = BMS.DCM.rfx.bma.mEp.A;
+A_stds      = BMS.DCM.rfx.bma.sEp.A;
 a           = BMS.DCM.rfx.bma.a;
-A_prctiles  = prctile(a, [2.5, 97.5], 3);
+A_prctiles  = prctile(a, [.4, 99.6], 3); % Sidak
 % and b parameters
 B_mus       = BMS.DCM.rfx.bma.mEp.B(:,:,2);
+B_stds      = BMS.DCM.rfx.bma.sEp.B(:,:,2);
 b           = squeeze(BMS.DCM.rfx.bma.b(:,:,2,:));
-B_prctiles  = prctile(b, [2.5, 97.5], 3);
+B_prctiles  = prctile(b, [.4, 99.6], 3);
 
 %%%%%% code to plot histograms for each connection, with mu and CIs as 
 %%%%%% dotted lines
@@ -183,6 +199,23 @@ titles = {'LIPL to LPut', 'LIPL to SMFC', 'LPut to LIPL', 'LPut to SMFC', ...
 idx = [4, 7, 2, 8, 3, 6];     
 rows =[2, 3, 1, 3, 1, 2];
 cols =[1, 1, 2, 2, 3, 3];
+
+%%%% get the probability that the a and b parameters overlap with zero
+b_test = compare_grp_vs_zero(rows, cols, B_mus, B_stds);
+var_idx = [2, 3, 4, 6, 7, 8]; % index of elements of the participant b matrix that should be
+% included in the correlation matrix
+[~,bMeff,balpha] = Meff_correction(BMS.DCM.rfx.bma.mEps, var_idx, 1);
+% balpha = .0087; tsk, used random effects info to compute this. Not using
+% as not 100% sure its right
+% criteria = > 0.9913
+% or Sidak: (1-.05)^(1/6): 0.9915
+% 0.9322    0.8844    1.0000    0.9617    0.8190    0.9774
+
+a_test = compare_grp_vs_zero(rows, cols, A_mus, A_stds);
+[~,aMeff,aalpha] = Meff_correction(BMS.DCM.rfx.bma.mEps, var_idx, 2);
+% aalpha = .0093
+% criteria = > .9907
+% 1.0000    0.9795    1.0000    1.0000    1.0000    0.6612
 
 %%%%% plot a parameters
 top_tit = {'A parameters'};
@@ -196,11 +229,11 @@ plot_grp_level_params(b, idx, rows, cols, B_mus, B_prctiles, x_range, titles, to
 saveas(gcf, [fig_fol '/connection_family_comparison/BMA_b_params.png']);
 % final model =
 % A        [1 1 1;
-%           1 1 1;
+%           1 1 0;
 %           0 1 1];
-% B        [0 1 1;
-%           1 0 1;
-%           0 1 0]
+% B        [0 1 0;
+%           0 0 0;
+%           0 0 0]
 % C        [0 1 0]';
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -209,8 +242,8 @@ saveas(gcf, [fig_fol '/connection_family_comparison/BMA_b_params.png']);
 % differences (control analysis)
 %%%%%%%% here I am re-running bma at the group level, to test whether there
 %%%%%%%% are any pre-training differences between groups
-s1_sub_nums = [101, 103:123, 125:127, 129:137, 139:150];
-s2_sub_nums = [201:202, 204:222, 224:232, 234:249];
+s1_sub_nums = sub_nums(sub_nums <= 150);
+s2_sub_nums = sub_nums(sub_nums > 150);
 mfname      = [dat_fol '/connection_family_comparison/control_analyses/' 'train_grp_allmodels_cortconn_test'];
 get_model_space_filenames_v2(s1_sub_nums, fnames, ms, base, mfname);
 mfname      = [dat_fol '/connection_family_comparison/control_analyses/' 'ctrl_grp_allmodels_cortconn_test'];
@@ -241,12 +274,7 @@ top_tit = {'S1 B parameters (sub level) - by groups'};
 x_range = [-.8, .8];
 plot_grp_level_by_grp(idx, rows, cols, trn_b, trn_b_mus, trn_b_prctiles, ctrl_b, ctrl_b_mus, ctrl_b_prctiles, x_range, titles, top_tit)
 saveas(gcf, [fig_fol '/connection_family_comparison/control_analyses/b_params_by_sub_by_grp.png']);
-%%%%%%% a parameters are clearly different between groups - can take
-%%%%%%% differences to check whether the differences are comparable to the
-%%%%%%% second round of modelling (s1 -> s2)
-%%%%%%% of the b-parameters - only the LIPL->SMFC b parameter shows a group
-%%%%%%% difference (i.e. training group mean is outside of the 95% CIs for
-%%%%%%% the control group) 
+%%%%%%% no strong differences between groups
 % save group level parameter estimates so that differences can be compared
 % to differences found when modelling the influence of training (s1->s2)
 save([dat_fol '/connection_family_comparison/control_analyses/grp_Params_by_grp.mat'], ...

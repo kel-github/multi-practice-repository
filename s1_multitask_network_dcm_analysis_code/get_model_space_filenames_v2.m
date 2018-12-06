@@ -19,7 +19,7 @@ for s = 1:length(sub_nums)
     for m = 1:ms
         m_cnt = m_cnt + 1;
         subj(s).sess(1).model(m_cnt).fname = ...
-            fullfile(base,sprintf('sub_%d_out_anatROI_initGLM',sub_nums(s)),'DCM_OUT',sprintf(fnames{f},m));
+            fullfile(base,sprintf('sub_%d_out_anatROI_initGLM_DCMOut',sub_nums(s)),'DCM_OUT',sprintf(fnames{f},m));
         
         load(subj(s).sess(1).model(m_cnt).fname);
         subj(s).sess(1).model(m_cnt).F = F;

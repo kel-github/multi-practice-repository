@@ -3,9 +3,9 @@ title: "multitask_s1_paramsBehav"
 author: "K. Garner"
 date: "28 August 2018"
 output:
-  word_document: default
-  pdf_document: default
   html_document: default
+  pdf_document: default
+  word_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -23,9 +23,9 @@ First I present the correlations between parameter estimates and single-task res
 ### What this code does:
 1. load the subject individual parameter estimates (Session 1 DCM - influence of multitasking)
 2. load the behaviour and extract variables of interest - join to the parameter estimate data
-3. Plot correlations between parameter estimates and behaviour and perform correlation tests between estimated parameters and observed data
+3. Plot correlations between parameter estimates (for Lput to LIPL) and behaviour and perform correlation tests between estimated parameters and observed data
 
-## Q. Do b parameters correlate with single-task RTs or with multitasking cost?
+## Q. Do b parameters correlate with single-task RTs or with multitasking cost? (no)
 
 1. Load subject parameter estimates
 ```{r get_b_data, include=TRUE, echo=FALSE}
@@ -97,8 +97,8 @@ lapply(unique(data$con), get.cors, data = data, dv = "Pre_VS", method="spearman"
 ```
  - now perform correction for inflated type 1 error
 ```{r fdr-Pre_VS, echo=TRUE}
-Pre_VS_ps = c(0.3129, 0.02082, 0.2273, 0.8235, 0.4002)
-p.adjust(Pre_VS_ps, method="fdr")
+#Pre_VS_ps = c(0.3129, 0.02082, 0.2273, 0.8235, 0.4002)
+#p.adjust(Pre_VS_ps, method="fdr")
 ```
 - as can be seen above, none survive correction 
 
@@ -131,8 +131,8 @@ lapply(unique(data$con), get.cors, data = data, dv = "Pre_VM_DC", method="spearm
 ```
  - now perform correction for inflated type 1 error
 ```{r fdr_Pre_VM_DC, echo=TRUE}
-Pre_VS_ps = c(0.0909, 0.1628, 0.6785, 0.8459, 0.0164)
-p.adjust(Pre_VS_ps, method="fdr")
+#Pre_VS_ps = c(0.0909, 0.1628, 0.6785, 0.8459, 0.0164)
+#p.adjust(Pre_VS_ps, method="fdr")
 ```
 - doesn't quite survive correction
 
