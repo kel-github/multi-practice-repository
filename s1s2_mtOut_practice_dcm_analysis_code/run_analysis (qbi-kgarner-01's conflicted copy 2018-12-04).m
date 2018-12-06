@@ -14,7 +14,7 @@
 %%%%% analysis was run - but if you want to repeat the analysis steps you
 %%%%% will need to...
 %%%%% change the following paths to match your local setup.
-PLACE = 'home';
+PLACE = 'qubes';
 
 switch PLACE
     case 'home'
@@ -70,13 +70,14 @@ sub_nums(rm_idx) = [];
 sub_fol = 'sub_%d_out_s1s2_anatROI_initGLM_regOutMult';
 sess_peaks = get_participant_peaks(sub_nums, data_dir, sub_fol);
 save([dat_fol '/s1s2_regOutMult_sub_peaks'], 'sess_peaks');
-
-load([dat_fol '/s1s2_regOutMult_sub_peaks'], 'sess_peaks');
 proportion_presma = sum(sess_peaks(:,2,3) > 0)/length(sess_peaks(:,2,3)); % just getting proportion of p's
 % for whom the peak was pre sma rather than sma proper (defined as being
 % anterior to the origin of the y coordinate - Lee et al 2010, Defining functional SMA and
 % pre-SMA subregions in human MFC using resting state fMRI. Neuroimage
-
+% same for training grp
+sum(sess_peaks(1:46,2,3) > 0)/length(sess_peaks(1:46,2,3)); % .83
+% and for control group
+sum(sess_peaks(47:95,2,3) > 0)/length(sess_peaks(47:95,2,3)); % .73
 %%%% get model space filenames for across all BMS
 fnames   = {'DCM_LPut_inp_winb_prac%d.mat'};
 ms       = 1:15;
