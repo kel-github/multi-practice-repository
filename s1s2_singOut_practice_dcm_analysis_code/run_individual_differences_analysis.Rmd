@@ -21,11 +21,12 @@ library(car)
 ### Summary
 Having identified the candidate network underpinning modulations in connectivity due to multitasking practice, we sought to identify whether parameter estimates for each subject correlate with the observed behaviour, and whether correlation differences are different between groups. We would expect the parameter estimates to correspond to practice-related reductions in multitasking costs, rather than to reductions of response time under single-task conditions (i.e. when there is no multitasking).
 
-First I present the correlations between parameter estimates and multitask reduction costs (for the summed multitasking cost reductions - see s1 individual differences analysis for definitions). No statistically significant correlations are observed.
+First I present the correlations between parameter estimates and multitask reduction costs (for the summed multitasking cost reductions - see s1 individual differences analysis for definitions). 
 
 ### What this code does:
 1. load the subject individual parameter estimates (Session 1 DCM - influence of multitasking)
 2. load the behaviour and extract variables of interest - join to the parameter estimate data
+3. Plot histograms to get an idea how far off normality the variables are/to inform test selection
 3. Plot correlations between parameter estimates and behaviour and perform correlation tests between estimated parameters and observed data
 
 
@@ -38,13 +39,13 @@ get.b.data <- function(fname){
   dat$grp = as.factor(dat$grp)
   levels(dat$grp) = c("train", "control")
   # assign parameter name
-  dat$con = rep(c("lipl_to_lput", "lput_to_lipl", "lput_to_smfc", "smfc_to_lipl", "smfc_to_lput"), times = length(levels(dat$sub)))
+  dat$con = rep(c("lipl_to_lput", "lput_to_lipl", "lput_to_smfc", "smfc_to_lipl"), times = length(levels(dat$sub)))
   dat$con = as.factor(dat$con)
   dat
 }
 fname = "~/Dropbox/QBI/mult-conn/multi-practice-repository/s1s2_singOut_practice_dcm_analysis_outdata/behav_correlations/sub_b_params.csv"
 params = get.b.data(fname)
-cons.of.int = c("smfc_to_lput", "lput_to_smfc")
+cons.of.int = c("lput_to_smfc")
 params = params[params$con %in% cons.of.int, ]
 params$con = droplevels(params$con)
 ```
@@ -59,15 +60,26 @@ get.behav.data <- function(fname){
   behav.dat$Group  <- as.factor(behav.dat$Group)
   levels(behav.dat$Group) <- c("train","control")
   
-  behav.dat = behav.dat[,c(1:2, 29, 32, 27, 28, 33, 34)]
+  behav.dat = behav.dat[,c(1:10, 29, 32, 27, 28, 33, 34)]
   behav.dat
 }
 
 behav.dat = get.behav.data('../s1s2_behavioural_data/final_data_cleaned_250ms_to_3_sdevs_1331_recode.csv')
-
 data = inner_join(params, behav.dat, by=c("sub"))
 
+data = data %>% mutate( pre_cost  = (Pre_VM - Pre_VS) + (Pre_AM - Pre_AS) ,
+                        post_cost = (Post_VM - Post_VS) + (Post_AM - Post_AS),
+                        mt_prct_down = 100 - ((post_cost/pre_cost)*100) )
+
 ```
+
+```{r CheckDists_MakeVars, echo=TRUE}
+
+with(data, hist(mt_prct_down, breaks = 20))
+with(data, hist(b, breaks = 20))
+with(data, boxplot(b))
+```
+Some outliers on mt reduct and on b parameters, given a normal distribution, so will use spearman correlations
 
 
 ```{r plot_corrs_functions, include=TRUE, echo=FALSE}
@@ -116,45 +128,26 @@ get.cors <- function(data, iv, dv, method){
 
 # params vs. Sum DC Diff
 ```{r Grp_Sum_DC_Diff, echo=TRUE}
-draw.scatters.grp(data, "Sum_Diff")
-lapply(unique(data$con), get.cors, data = data, dv = "Sum_Diff", method="spearman")
+
+draw.scatters.grp(data, "mt_prct_down")
+lapply(unique(data$con), get.cors, data = data, dv = "mt_prct_down", method="spearman")
+
+test = data[data$b < 3, ]
+draw.scatters.grp(test, "mt_prct_down")
+lapply(unique(data$con), get.cors, data = test, dv = "mt_prct_down", method="spearman")
 ```
+Correlation is significant at the group level (is also significant when outlier b > 4 is removed)
 
-No statistically significant correlations are observed.
 
-### Testing group differences on parameter values per se
-```{r Grp_Param_Diff_Test, include=TRUE, echo=TRUE}
 
-grps.mod = lme(b ~ con + grp + con*grp, random = ~1|sub, 
-               data   = data,
-               method = "REML")
-Anova(grps.mod, type="II")
+```{r Train_Sum_DC_Diff, echo=TRUE}
+draw.scatters.grp(data[data$Group == "train", ], "mt_prct_down")
+lapply(unique(data$con), get.cors, data = data[data$Group == "train", ], dv = "mt_prct_down", method="spearman")
 ```
+Not significant for the training group, manual check showed outlier (b > 4) removal did not make a difference
 
-There is a main effect of parameter (using type II SS as no statistical interaction).
-
-Plotting b parameters by parameter and by group
-```{r plot_b_dists_by_grp_functions, include=FALSE, echo=FALSE}
-#### basic plot function to plot rts by parameter
-plot.grp.violins <- function(data){
-  # enter the dataframe and the behavioural DV of choice to yield scatter plot of b_param by    dv
-  v.plot = ggplot(data, aes_string(x="grp", y="b", fill="grp")) + 
-           geom_violin() +
-           geom_boxplot(width=0.2) +
-           facet_wrap(~con) +
-           theme_bw() +
-           theme(axis.line = element_line(colour = "black"),
-           panel.grid.major = element_blank(),
-           panel.grid.minor = element_blank(),
-           panel.border = element_blank(),
-           panel.background = element_blank())
-          
- v.plot
-}
+```{r Control_Sum_DC_Diff, echo=TRUE}
+draw.scatters.grp(data[data$Group == "control", ], "mt_prct_down")
+lapply(unique(data$con), get.cors, data = data[data$Group == "control", ], dv = "mt_prct_down", method="spearman")
 ```
-
-```{r plot_b_dists, include=TRUE, echo=TRUE}
-plot.grp.violins(data)
-
-```
-
+Also not significant for the control group

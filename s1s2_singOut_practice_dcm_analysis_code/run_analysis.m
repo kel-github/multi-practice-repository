@@ -20,13 +20,13 @@ switch PLACE
     case 'home'
         
         addpath('~/Documents/MATLAB/spm12');
-        data_dir = '/Volumes/HouseShare/multi-dcm-out/dcm_s1s2_s1Win_RegOutSing'; % location of subject folders of dcm data
+        %data_dir = '/media/kgarner/KG_MRI_PROC/s2_SINGTRIALS_MODELS_OUT'; % location of subject folders of dcm data; % location of subject folders of dcm data
         dat_fol  = '/Users/kels/Dropbox/QBI/mult-conn/multi-practice-repository/s1s2_singOut_practice_dcm_analysis_outdata'; % location of outputs for this analysis
         fig_fol  = '/Users/kels/Dropbox/QBI/mult-conn/multi-practice-repository/s1s2_singOut_practice_dcm_analysis_figs';
     case 'qubes'
         
         addpath('/home/kgarner/Documents/MATLAB/spm12');
-        data_dir = '/media/kgarner/HouseShare/multi-dcm-out/dcm_s1s2_s1Win_RegOutSing'; % location of subject folders of dcm data
+        data_dir = '/media/kgarner/KG_MRI_PROC/s2_MULTTRIALS_MODELS_OUT'; % location of subject folders of dcm data% location of subject folders of dcm data
         dat_fol  = '/home/kgarner/Dropbox/QBI/mult-conn/multi-practice-repository/s1s2_singOut_practice_dcm_analysis_outdata'; % location of outputs for this analysis
         fig_fol  =  '/home/kgarner/Dropbox/QBI/mult-conn/multi-practice-repository/s1s2_singOut_practice_dcm_analysis_figs';
 end
@@ -61,13 +61,15 @@ end
 rm_subs = sub_nums(rm_idx);
 sub_nums(rm_idx) = [];
 
-% sub 102, 106, 128, 138, 203, 223, % are missing models - see s1
-% run_analysis.m for notes on missing data, remaining would not have had
-% sig voxels id'd by new first level glm
+% sub 102, 128, 138, 144, 203, % are missing models - see s1 and s1s2
+% single trials
+% sub_fol = 'sub_%d_out_s1s2_anatROI_initGLM_regOutSing';
+% sess_peaks = get_participant_peaks(sub_nums, data_dir, sub_fol);
+% save([dat_fol '/s1s2_regOutsing_sub_peaks'], 'sess_peaks');
 
 %%%% get model space filenames for across all BMS
 fnames   = {'DCM_LPut_inp_winb_prac%d.mat'};
-ms       = 1:31;
+ms       = 1:15;
 base     = data_dir;
 mfname   = [dat_fol '/allsubs/allsubs_allmodels_s1s2_s1winB_singRegOut'];
 get_model_space_filenames_v3(sub_nums, fnames, ms, base, mfname);
@@ -76,7 +78,7 @@ get_model_space_filenames_v3(sub_nums, fnames, ms, base, mfname);
 g1_sub_nums = sub_nums(sub_nums < 200);
 tmp_subs    = g1_sub_nums;
 fnames   = {'DCM_LPut_inp_winb_prac%d.mat'};
-ms       = 1:31;
+ms       = 1:15;
 base     = data_dir;
 mfname   = [dat_fol '/train/train_allmodels_s1s2_s1winB_singRegOut'];
 get_model_space_filenames_v3(g1_sub_nums, fnames, ms, base, mfname);
@@ -98,13 +100,11 @@ get_model_space_filenames_v3(g2_sub_nums, fnames, ms, base, mfname);
 % output figs saved manually at 
 % [fig_fol 'train/train_mPrac_sOut_BOR.fig']
 % [fig_fol 'train/train_mPrac_sOut_ModExceedance.fig']
-% batch2_control_BMA_job.m % uncomment to run
+% batch2_control_BMA_job % uncomment to run
 % [fig_fol 'control/control_mPrac_sOut_BOR.fig']
 % [fig_fol 'control/control_mPrac_sOut_ModExceedance.fig']
 % There are some differences between groups in terms of favoured model
-% structures - however as there is no single clear winner for either group,
-% we now look at posteriors over parameters estimated for each group using
-% BMA.
+% structures - however as many model features are similar, will conduct BMA
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -118,43 +118,41 @@ ctrl_bms_fname = [dat_fol '/control/' 'BMS.mat'];
 [ctrl_a, ctrl_a_mus, ctrl_a_prctiles, ctrl_b, ctrl_b_mus, ctrl_b_sds, ctrl_b_prctiles] = get_grpLevel_params_by_grp_v2(ctrl_bms_fname,2);
 % now plot b's
 titles = {'LIPL to LPut', 'LPut to LIPL', 'LPut to SMFC', ...
-          'SMFC to LIPL', 'SMFC to LPut'};
-idx = [4, 2, 8, 3, 6];     
-rows =[2, 1, 3, 1, 2];
-cols =[1, 2, 2, 3, 3];
+          'SMFC to LIPL'};
+idx = [4, 2, 8, 3];     
+rows =[2, 1, 3, 1];
+cols =[1, 2, 2, 3];
 top_tit = {'S1 B parameters (sub level) - by groups'};
 x_range = [-.8, .8];
 plot_grp_level_params(all_b, idx, rows, cols, all_b_mus, all_b_prctiles, x_range, titles, top_tit)
 saveas(gcf, [fig_fol '/BMA_b_params_over_both_grps.png']);
 plot_grp_level_by_grp(idx, rows, cols, trn_b, trn_b_mus, trn_b_prctiles, ctrl_b, ctrl_b_mus, ctrl_b_prctiles, x_range, titles, top_tit)
 saveas(gcf, [fig_fol '/BMA_b_params_by_grp.png']);
-%%%%%% 1 connection is statistically different to 0 - LPut -> SMFC, SMFC ->
-%%%%%% LPut, need to test LPut -> LIPL
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 4. Test for group differences on included connections
-n = [2, 1, 3, 1, 2]; 
-m = [1, 2, 2, 3, 3]; 
+n = [2, 1, 3, 1]; 
+m = [1, 2, 2, 3]; 
 train_pps = compare_grp_vs_zero(n, m, trn_b_mus, trn_b_sds);
-% for the training group, the LPut -> LIPL, and the SMFC -> Lput
-% connections survive correction for multiple comparisons (.05/5)
-% 0.9212    0.9869    0.6306    0.6465    0.9958
+% for the training group, only the LPut -> SMFC
+% connection survive corrections for multiple comparisons (.05/4) = > .9875
+% Sidak w 4 = > .9873
+% 0.8656    0.8721    0.9891    0.5223 % LPut to SMFC is different
 control_pps = compare_grp_vs_zero(n, m, ctrl_b_mus, ctrl_b_sds);
-% for the control group, only the LPut -> SMFC model survives correction
-%  0.5565    0.6479    1.0000    0.9752    0.8659
-n = [1, 3, 2];
-m = [2, 2, 3];
+% for the control group, only the LPut -> SMFC connection survives correction
+%  0.5996    0.9293    1.0000    0.8328
+
 pps = compare_grps_posts(n, m, trn_b_mus, trn_b_sds, ctrl_b_mus, ctrl_b_sds);
-%%%% Lput -> SMFC sig diff between the two groups (.9995), LPut to LIPL, 
-%%%% and SMFC -> LPut do not survive correction (.9701, .8842)
+% 0.7194    0.5989    0.9983    0.7609
+%%%% Lput -> SMFC sig diff between the two groups (trn < ctrl)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 6. Extract b parameters for individual differences analysis
-idx = [4, 2, 8, 3, 6];     
-m =[2, 1, 3, 1, 2];
-n =[1, 2, 2, 3, 3];
+idx = [4, 2, 8, 3];     
+m =[2, 1, 3, 1];
+n =[1, 2, 2, 3];
 z = 2;
 % LOAD BMS FILE
 load([dat_fol '/train/BMS.mat'])
