@@ -43,6 +43,8 @@ get.b.data <- function(fname){
 }
 fname = "~/Dropbox/QBI/mult-conn/multi-practice-repository/s1_multitask_network_dcm_analysis_outdata/behav_correlations/sub_b_params.csv"
 params = get.b.data(fname)
+params.wide = spread(params, con, b)
+write.csv(params.wide, file="pre_practice_multi_task_params.csv")
 ```
 2. Load behavioural data and extract variables of interest, and join to parameter data
 ```{r get_behav_data, include=TRUE, echo=FALSE}
