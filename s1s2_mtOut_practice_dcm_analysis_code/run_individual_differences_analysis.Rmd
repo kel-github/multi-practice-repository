@@ -45,6 +45,10 @@ get.b.data <- function(fname){
 }
 fname = "~/Dropbox/QBI/mult-conn/multi-practice-repository/s1s2_mtOut_practice_dcm_analysis_outdata/behav_correlations/sub_b_params.csv"
 params = get.b.data(fname)
+
+# convert to wideform and save for LBA analysis
+params.wide = spread(params, con, b)
+write.csv(params.wide, file="single_task_practice_params.csv")
 cons.of.int = c("lput_to_lipl", "lput_to_smfc", "lipl_to_lput")
 params = params[params$con %in% cons.of.int, ]
 params$con = droplevels(params$con)
@@ -69,7 +73,7 @@ behav.dat = get.behav.data('../s1s2_behavioural_data/final_data_cleaned_250ms_to
 data = inner_join(params, behav.dat, by=c("sub"))
 data = data %>% mutate( pre_sing_total = Pre_VS + Pre_AS,
                         post_sing_total = Post_VS + Post_AS,
-                        prct_down = 100 - ((post_sing_total/pre_sing_total)*100) )
+                        prct_down = ((post_sing_total/pre_sing_total)*100) )
 
 ```
 

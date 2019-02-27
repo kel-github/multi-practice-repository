@@ -45,6 +45,9 @@ get.b.data <- function(fname){
 }
 fname = "~/Dropbox/QBI/mult-conn/multi-practice-repository/s1s2_singOut_practice_dcm_analysis_outdata/behav_correlations/sub_b_params.csv"
 params = get.b.data(fname)
+# write to wideform for LBA analysis
+params.wide = spread(params, con, b)
+write.csv(params.wide, file="multi_task_practice_params.csv")
 cons.of.int = c("lput_to_smfc")
 params = params[params$con %in% cons.of.int, ]
 params$con = droplevels(params$con)
@@ -69,7 +72,7 @@ data = inner_join(params, behav.dat, by=c("sub"))
 
 data = data %>% mutate( pre_cost  = (Pre_VM - Pre_VS) + (Pre_AM - Pre_AS) ,
                         post_cost = (Post_VM - Post_VS) + (Post_AM - Post_AS),
-                        mt_prct_down = 100 - ((post_cost/pre_cost)*100) )
+                        mt_prct_down = ((post_cost/pre_cost)*100) )
 
 ```
 
