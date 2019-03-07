@@ -1,8 +1,8 @@
 # the modulatory influence of training on the brain network that underpins multitasking
 
-Analysis code for investigation of how multitasking and practice influence cortico-striatal connectivity
-Link to the data:  https://espace.library.uq.edu.au/view/UQ:370251
-Link to the paper: https://www.biorxiv.org/content/10.1101/564450v1
+Analysis code for investigation of how multitasking and practice influence cortico-striatal connectivity  
+Link to the data:  https://espace.library.uq.edu.au/view/UQ:370251  
+Link to the paper: https://www.biorxiv.org/content/10.1101/564450v1  
 
 (c) Kelly Garner, 2018  
 Free to use and share, please cite author/source  
